@@ -24,6 +24,7 @@
     <script src="https://bundle.run/buffer@6.0.3"></script>
     <script src="https://bundle.run/bech32@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <script src="https://unpkg.com/axios@0.24.0/dist/axios.min.js"></script>
     <script src="translation.js?v=68"></script>
 </head>
 <body>
@@ -4321,6 +4322,48 @@
             document.getElementById( "modal" ).innerHTML = "";
             var div = document.createElement( "div" );
             div.className = "gallery-holder";
+            var input = document.createElement("input");
+            input.setAttribute("id", "image-file");
+            input.setAttribute("type", "file");
+            input.onchange = async function() {
+                let fileElement = document.getElementById("image-file");
+                // let user = { name:'john', age:34 };
+                let photo = fileElement.files[0];
+                    
+                let formData = new FormData();
+                formData.append("photo", photo);
+                // formData.append("user", JSON.stringify(user)); 
+                
+                // const ctrl = new AbortController()    // timeout
+                // setTimeout(() => ctrl.abort(), 5000);
+
+                const cancel = axios.CancelToken.source();
+                axios.request({
+                    method: "post",
+                    url: "https://gw.crustfiles.net/api/v0/add",
+                    params: {
+                        pin: true
+                    },
+                    headers: {
+                        Authorization: "Basic Y1RIYVd3em95V1diSGVtSDdHVDJnU3UxN2g0THRpb3FiYnhxaURFQmlSNDlEdnBUTjoweDU4MjNiMmFmOTA4ZTYxYTM0Y2FhNTU3ZTU3ZGRlMWMzNTJhNGUxNTk3OTM4ZmE0YzdiNjYzN2MwMTJiYzYxNDY5Y2U0MTViNGVmZTQzNzNjYWExZWRjYTdkMGI3NDE2MDViMDYwZTBjZmNjNjNmNDVkNjIyNTBjZWVhOWQ3YTgx"
+                    },
+                    onUploadProgress: progressEvent => {
+                        const percentCompleted = Math.round(
+                            (progressEvent.loaded * 100) / progressEvent.total
+                        );
+                        console.log(`upload process: ${percentCompleted}%`);
+                    },
+                    data: formData,
+                    cancelToken: cancel.token
+                }).then((r) => {
+                    imageUrl = "https://crustipfs.info/ipfs/" + r.data.Hash;
+                    showImage(imageUrl);
+                    // document.getElementById( "black-bg" ).style.display = "none";
+                    // document.getElementById( "modal" ).style.display = "none";
+                    // console.log(imageUrl);
+                })
+            }
+            div.append(input);
             document.getElementById( "modal" ).append( div );
             imgs.forEach( function( img ) {
                 var div = document.createElement( "div" );
@@ -4336,11 +4379,25 @@
                 }
                 document.getElementsByClassName( "gallery-holder" )[ 0 ].append( div );
             });
-            if ( !document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML || document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML == "" ) {
-                document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML = `${t('imageUploadInfo')}`;
-            }
+            //if ( !document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML || document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML == "" ) {
+            //    document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML = `${t('imageUploadInfo')}`;
+            //}
             document.getElementById( "black-bg" ).style.display = "block";
             document.getElementById( "modal" ).style.display = "block";
+        }
+        function showImage(img) {
+            var div = document.createElement( "div" );
+            div.setAttribute( "data-img", img );
+            div.className = "gallery";
+            div.style.backgroundImage = "url(" + img + ")";
+            div.onclick = function() {
+                document.getElementsByClassName( "input" )[ 0 ].firstElementChild.value += this.getAttribute( "data-img" );
+                document.getElementById( "black-bg" ).style.display = "none";
+                document.getElementById( "modal" ).style.display = "none";
+                document.getElementsByClassName( "note-input" )[ 0 ].focus();
+                document.getElementsByClassName( "note-input" )[ 0 ].select();
+            }
+            document.getElementsByClassName( "gallery-holder" )[ 0 ].append( div );
         }
     </script>
       
