@@ -185,9 +185,10 @@
         function urlify( text, isMine ) {
             var ytRegex = /(http:|https:)?\/\/(www\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?/g
             var imgRegex = /\b(https?:\/\/\S+(?:\.png|\.jpe?g|\.gif|\.webp|\.PNG|\.JPE?G|\.GIF|\.WEBP)\S*)\b/g;
+            var imgRegex2 = /\b(https?:\/\/crustipfs\.info\/ipfs\/\S+)\b/g;
             var urlRegex = /\S+\.{1}[a-zA-Z0-9\?\=\&\$\+\,\;\@\#\%\-\_]{2,}\/?[a-zA-Z0-9/\\?\=\&\$\+\,\;\@\#\%\-\_\.]*/g;
             var returnable = "";
-            if ( !isMine && !text.match( ytRegex ) && !text.match( imgRegex ) ) {
+            if ( !isMine && !text.match( ytRegex ) && !text.match( imgRegex ) && !text.match( imgRegex2 ) ) {
                 returnable = text.replace( urlRegex, ( url ) => {
                     if ( url.includes( ".." ) ) {
                         return url;
@@ -199,7 +200,7 @@
                     return `<a onclick="event.stopPropagation()" href="${url2}" target="_blank" rel="nofollow noopener" style="color: #4287f5;">${url}</a>`;
                 })                
             }
-            if ( isMine && !text.match( ytRegex ) && !text.match( imgRegex ) ) {
+            if ( isMine && !text.match( ytRegex ) && !text.match( imgRegex ) && !text.match( imgRegex2 ) ) {
                 returnable = text.replace( urlRegex, ( url ) => {
                     if ( url.includes( ".." ) ) {
                         return url;
@@ -211,8 +212,34 @@
                     return `<a onclick="event.stopPropagation()" href="${url2}" target="_blank" rel="nofollow noopener" style="color: white;">${url}</a>`;
                 })
             }
-            if ( text.match( imgRegex ) ) {
+            if ( text.match( imgRegex )) {
                 returnable = text.replace( imgRegex, ( img ) => {
+                    if ( localStorage[ "img_cache" ] ) {
+                        var imgs = JSON.parse( localStorage[ "img_cache" ] );
+                    } else {
+                        var imgs = [];
+                        localStorage[ "img_cache" ] = JSON.stringify( imgs );
+                    }
+                    if ( isMine && imgs.includes( img ) ) {
+                        var i; for ( i=0; i<imgs.length; i++ ) {
+                            if ( imgs[ i ] == img ) {
+                                imgs.splice( i, 1 );
+                            }
+                        }
+                        imgs.unshift( img );
+                    }
+                    if ( isMine && imgs.length >= 50 && !imgs.includes( img ) ) {
+                        imgs.unshift( img );
+                        imgs.pop();
+                    } else if ( isMine && !imgs.includes( img ) ) {
+                        imgs.unshift( img );
+                    }
+                    localStorage[ "img_cache" ] = JSON.stringify( imgs );
+                    return `<a href="${img}" target="_blank" rel="nofollow noopener" onclick="event.stopPropagation()"><img src="${img}" onclick="event.stopPropagation()" /></a>`;
+                })
+            }
+            if (text.match( imgRegex2 ) ) {
+                returnable = text.replace( imgRegex2, ( img ) => {
                     if ( localStorage[ "img_cache" ] ) {
                         var imgs = JSON.parse( localStorage[ "img_cache" ] );
                     } else {
@@ -4365,6 +4392,7 @@
             }
             div.append(input);
             document.getElementById( "modal" ).append( div );
+            /*
             imgs.forEach( function( img ) {
                 var div = document.createElement( "div" );
                 div.setAttribute( "data-img", img );
@@ -4379,6 +4407,7 @@
                 }
                 document.getElementsByClassName( "gallery-holder" )[ 0 ].append( div );
             });
+            */
             //if ( !document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML || document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML == "" ) {
             //    document.getElementsByClassName( "gallery-holder" )[ 0 ].innerHTML = `${t('imageUploadInfo')}`;
             //}
