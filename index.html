@@ -4340,49 +4340,38 @@
     </script>
     <script>
         function uploadFile() {
-            let auth = "Y1RIYVd3em95V1diSGVtSDdHVDJnU3UxN2g0THRpb3FiYnhxaURFQmlSNDlEdnBUTjoweDU4MjNiMmFmOTA4ZTYxYTM0Y2FhNTU3ZTU3ZGRlMWMzNTJhNGUxNTk3OTM4ZmE0YzdiNjYzN2MwMTJiYzYxNDY5Y2U0MTViNGVmZTQzNzNjYWExZWRjYTdkMGI3NDE2MDViMDYwZTBjZmNjNjNmNDVkNjIyNTBjZWVhOWQ3YTgx";
             let photo = document.getElementById("image-file")[ "files" ][ 0 ];
-            console.log(photo)
             let formData = new FormData();
             formData.append("photo", photo);
-
-            let request = new XMLHttpRequest();
-            request.addEventListener("load", (r) => {
-                let cid = JSON.parse(r.target.responseText)["Hash"];
-                let imgUrl = "https://crustipfs.info/ipfs/" + cid;
-
-                const cancel = axios.CancelToken.source();
-                axios.request({
-                    method: "post",
-                    url: "https://pin.crustcode.com/psa/pins",
-                    data: {
-                        cid: cid,
-                        name: photo.name
-                    },
-                    headers: {
-                        Authorization: "Bearer " + auth
-                    },
-                    cancelToken: cancel.token
-                }).then((r) => {
-                    console.log(r)
-                    showImage(imgUrl);
+            
+            document.getElementById("progressBar").value = Math.round(0);
+            let xhr = new XMLHttpRequest();
+            xhr.addEventListener("load", (r) => {
+                let statusCode = xhr.status;
+                if (statusCode >= 200 && statusCode < 300) {
+                    let cid = JSON.parse(r.target.responseText)["Hash"];
+                    let imgUrl = "https://crustipfs.info/ipfs/" + cid;
                     document.getElementById("imgTip").style.display = "block";
-                })
+                    showImage(imgUrl);
+                } else {
+                    alert(`Upload file ${photo.name} failed, please try again.`);
+                }
             }, false);
-            request.upload.addEventListener('progress', function (e) {
+            xhr.upload.addEventListener('progress', function (e) {
                 let percent = (event.loaded / event.total) * 100;
                 let uploadContent = "Uploaded " + event.loaded + " bytes of " + event.total;
                 document.getElementById("progressBar").value = Math.round(percent);
                 if (percent === 100) {
-                    document.getElementById("status").innerHTML = "100% " + uploadContent;
+                    document.getElementById("uploadStatus").innerHTML = "100% " + uploadContent;
                 } else {
-                    document.getElementById("status").innerHTML = Math.round(percent) + "% " + uploadContent;
+                    document.getElementById("uploadStatus").innerHTML = Math.round(percent) + "% " + uploadContent;
                 }
             });   
-            request.open('post', 'https://gw.crustfiles.net/api/v0/add?pin=true');
-            request.setRequestHeader("Authorization","Basic " + auth)
-            request.send(formData);
-            document.getElementById("status").innerHTML = "Preparing to upload, please wait...";
+            xhr.open('post', 'https://gw.crustfiles.net/api/v0/add?pin=true');
+            xhr.setRequestHeader("Authorization","Basic Y1RIYVd3em95V1diSGVtSDdHVDJnU3UxN2g0THRpb3FiYnhxaURFQmlSNDlEdnBUTjoweDU4MjNiMmFmOTA4ZTYxYTM0Y2FhNTU3ZTU3ZGRlMWMzNTJhNGUxNTk3OTM4ZmE0YzdiNjYzN2MwMTJiYzYxNDY5Y2U0MTViNGVmZTQzNzNjYWExZWRjYTdkMGI3NDE2MDViMDYwZTBjZmNjNjNmNDVkNjIyNTBjZWVhOWQ3YTgx")
+            xhr.send(formData);
+            document.getElementById("uploadStatus").innerHTML = "Preparing to upload, please wait...";
+            document.getElementById("uploadDiv").style.display = "block";
         }
         function showImgs() {
             if ( localStorage[ "img_cache" ] ) {
@@ -4396,37 +4385,41 @@
             let html = `
                 <div class="gallery-holder" style="overflow-y:auto">
                     <h2>Upload provided by Crust Network</h2>
-                    <form id="upload_form" enctype="multipart/form-data" method="post">
+                    <form enctype="multipart/form-data" method="post">
                         <input type="file" id="image-file" accept="image/*" onchange="uploadFile()"><br>
-                        <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
-                        <p id="status"></p>
+                        <div id="uploadDiv" style="display:none">
+                            <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
+                            <p id="uploadStatus"></p>
+                        </div>
                     </form>
-                    <p id="imgTip" style="font-size:11px;display:none">images:(click to get url)</p>
+                    <p id="imgTip" style="font-size:11px;display:${imgs.length === 0 ? 'none' : 'block' }">images:(click to get url)</p>
                 </div>
             `;
             document.getElementById( "modal" ).innerHTML = html;
-            imgs.forEach( function( img ) {
-                var div = document.createElement( "div" );
-                div.setAttribute( "data-img", img );
-                div.className = "gallery";
-                div.style.backgroundImage = "url(" + img + ")";
-                div.onclick = function() {
-                    document.getElementsByClassName( "input" )[ 0 ].firstElementChild.value += this.getAttribute( "data-img" );
-                    document.getElementById( "black-bg" ).style.display = "none";
-                    document.getElementById( "modal" ).style.display = "none";
-                    document.getElementsByClassName( "note-input" )[ 0 ].focus();
-                    document.getElementsByClassName( "note-input" )[ 0 ].select();
-                }
-                document.getElementsByClassName( "gallery-holder" )[ 0 ].append( div );
-            });
+            imgs.forEach(showImage);
+
             document.getElementById( "black-bg" ).style.display = "block";
             document.getElementById( "modal" ).style.display = "block";
         }
-        function showImage(imgUrl) {
-            let div = document.createElement( "div" );
-            div.setAttribute( "data-img", imgUrl );
-            div.className = "gallery";
-            div.style.backgroundImage = "url(" + imgUrl + ")";
+        function showImage(img) {
+            var loadingDiv = `
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+                <div class='child-center'></div>
+			`;
+            var div = document.createElement( "div" );
+            div.setAttribute( "data-img", img );
+            div.className = "lds-spinner";
+            div.innerHTML = loadingDiv;
             div.onclick = function() {
                 document.getElementsByClassName( "input" )[ 0 ].firstElementChild.value += this.getAttribute( "data-img" );
                 document.getElementById( "black-bg" ).style.display = "none";
@@ -4434,9 +4427,63 @@
                 document.getElementsByClassName( "note-input" )[ 0 ].focus();
                 document.getElementsByClassName( "note-input" )[ 0 ].select();
             }
+            var imgObj = new Image();
+            imgObj.src = img;
+            imgObj.onload = function() {
+                for(const i of document.getElementsByClassName("child-center")) {
+                    i.style.display = "none";
+                }
+                div.style.backgroundImage = "url(" + img + ")";
+            }
+            imgObj.onerror = async function() {
+                pinImageWithDiv(div);
+            }
+            if (imgObj.complete) imgObj.onload();
             document.getElementsByClassName( "gallery-holder" )[ 0 ].append( div );
+        }
+        function pinImageWithDiv(div) {
+            var img = div.getAttribute( "data-img" );
+            var cid = img.substring("https://crustipfs.info/ipfs/".length);
+            var name = cid;
+            const cancel = axios.CancelToken.source();
+            axios.request({
+                method: "post",
+                url: "https://pin.crustcode.com/psa/pins",
+                data: {
+                    cid: cid,
+                    name: name
+                },
+                headers: {
+                    Authorization: "Bearer Y1RIYVd3em95V1diSGVtSDdHVDJnU3UxN2g0THRpb3FiYnhxaURFQmlSNDlEdnBUTjoweDU4MjNiMmFmOTA4ZTYxYTM0Y2FhNTU3ZTU3ZGRlMWMzNTJhNGUxNTk3OTM4ZmE0YzdiNjYzN2MwMTJiYzYxNDY5Y2U0MTViNGVmZTQzNzNjYWExZWRjYTdkMGI3NDE2MDViMDYwZTBjZmNjNjNmNDVkNjIyNTBjZWVhOWQ3YTgx"
+                },
+                cancelToken: cancel.token
+            })
+            .catch((e) => {
+                console.log(e)
+                pinImageWithDiv(div);
+            })
+            .then((r) => {
+                console.log(r)
+                var tryout = 30;
+                var imgObj = new Image();
+                imgObj.src = img;
+                imgObj.onload = function() {
+                    for(const i of document.getElementsByClassName("child-center")) {
+                        i.style.display = "none";
+                    }
+                    div.style.backgroundImage = "url(" + img + ")";
+                }
+                imgObj.onerror = async function() {
+                    if (--tryout >= 0) {
+                        await new Promise(r => setTimeout(r, 3000));
+                        imgObj.src = img + "?t=" + new Date().getTime();
+                    }
+                }
+                if (imgObj.complete) imgObj.onload();
+            })
         }
     </script>
       
 </body>
 </html>
+
