@@ -4383,34 +4383,35 @@
             document.getElementById( "modal" ).innerHTML = "";
 
             let html = `
-                <div class="gallery-holder" style="overflow-y:auto">
-                    <h2>Provided by Crust Network</h2>
-                    <form enctype="multipart/form-data" method="post">
-                        <input type="file" id="image-file" accept="image/*" onchange="uploadFile()" style="display:none" ><br>
-                        <label 
-                            for="image-file" 
-                            style="display: inline-block;
-                                    width: 140px; 
-                                    height: 32px;
-                                    padding: 4px 0px; 
-                                    margin: 8px; 
-                                    text-align: center; 
-                                    line-height: 32px; 
-                                    color: #ffffff;
-                                    background: #f44336;
-                                    border-radius: 5px;
-                                    cursor: pointer;
-                                    letter-spacing: 1px;"
-                        >
-                            select image
-                        </label>
-                        <div id="uploadDiv" style="display:none">
-                            <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
-                            <p id="uploadStatus"></p>
-                        </div>
-                    </form>
-                    <p id="imgTip" style="font-size:11px;display:${imgs.length === 0 ? 'none' : 'block' }">images:(click to get url)</p>
+                <div class="upload-title" style="height:70px">
+                <h1>IMAGE UPLOAD<span>Provided by Crust Network</span></h1>
                 </div>
+                <form enctype="multipart/form-data" method="post">
+                    <input type="file" id="image-file" accept="image/*" onchange="uploadFile()" style="display:none" ><br>
+                    <label 
+                        for="image-file" 
+                        style="display: inline-block;
+                                width: 140px; 
+                                height: 32px;
+                                padding: 4px 0px; 
+                                margin: 8px; 
+                                text-align: center; 
+                                line-height: 32px; 
+                                color: #ffffff;
+                                background: #f44336;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                letter-spacing: 1px;"
+                    >
+                        select image
+                    </label>
+                    <div id="uploadDiv" style="display:none">
+                        <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
+                        <p id="uploadStatus"></p>
+                    </div>
+                </form>
+                <p id="imgTip" style="font-size:11px;display:${imgs.length === 0 ? 'none' : 'block' }">images:(click to get url)</p>
+                <div class="gallery-holder" style="overflow-y:auto"></div>
             `;
             document.getElementById( "modal" ).innerHTML = html;
             imgs.forEach(showImage);
@@ -4456,7 +4457,8 @@
                 pinImageWithDiv(div);
             }
             if (imgObj.complete) imgObj.onload();
-            document.getElementsByClassName( "gallery-holder" )[ 0 ].childNodes[ 5 ].insertAdjacentElement("afterend", div);
+            var parentDiv = document.getElementsByClassName( "gallery-holder" )[ 0 ];
+            parentDiv.insertBefore(div, parentDiv.firstChild);
         }
         function pinImageWithDiv(div) {
             var img = div.getAttribute( "data-img" );
