@@ -4439,7 +4439,7 @@
                 pinImageWithDiv(div);
             }
             if (imgObj.complete) imgObj.onload();
-            document.getElementsByClassName( "gallery-holder" )[ 0 ].append( div );
+            document.getElementsByClassName( "gallery-holder" )[ 0 ].childNodes[ 5 ].insertAdjacentElement("afterend", div);
         }
         function pinImageWithDiv(div) {
             var img = div.getAttribute( "data-img" );
