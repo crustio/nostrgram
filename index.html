@@ -4384,9 +4384,26 @@
 
             let html = `
                 <div class="gallery-holder" style="overflow-y:auto">
-                    <h2>Upload provided by Crust Network</h2>
+                    <h2>Provided by Crust Network</h2>
                     <form enctype="multipart/form-data" method="post">
-                        <input type="file" id="image-file" accept="image/*" onchange="uploadFile()"><br>
+                        <input type="file" id="image-file" accept="image/*" onchange="uploadFile()" style="display:none" ><br>
+                        <label 
+                            for="image-file" 
+                            style="display: inline-block;
+                                    width: 140px; 
+                                    height: 32px;
+                                    padding: 4px 0px; 
+                                    margin: 8px; 
+                                    text-align: center; 
+                                    line-height: 32px; 
+                                    color: #ffffff;
+                                    background: #f44336;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                    letter-spacing: 1px;"
+                        >
+                            select image
+                        </label>
                         <div id="uploadDiv" style="display:none">
                             <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
                             <p id="uploadStatus"></p>
