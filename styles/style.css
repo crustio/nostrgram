@@ -987,9 +987,9 @@ body {
 
 div.gallery-holder {
     position: relative;
+    text-align: center;
     max-height: 400px;
     overflow-y: scroll;
-    text-align: center;
 }
 
 div.gallery {

@@ -212,7 +212,7 @@
                     return `<a onclick="event.stopPropagation()" href="${url2}" target="_blank" rel="nofollow noopener" style="color: white;">${url}</a>`;
                 })
             }
-            if ( text.match( imgRegex )) {
+            if ( text.match( imgRegex ) ) {
                 returnable = text.replace( imgRegex, ( img ) => {
                     if ( localStorage[ "img_cache" ] ) {
                         var imgs = JSON.parse( localStorage[ "img_cache" ] );
