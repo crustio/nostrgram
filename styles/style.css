@@ -1235,10 +1235,10 @@ select option {
     font-family:"Playfair Display", serif; 
     font-weight:400;
 }
-.upload-title h1 span {
+.upload-title h1 a {
     margin-top: 5px;
     font-size:15px; 
-    color:#444; 
+    color:#3366CC; 
     word-spacing:1px; 
     font-weight:normal; 
     letter-spacing:2px;
@@ -1252,7 +1252,7 @@ select option {
     grid-gap: 20px;
     align-items: center;
 }
-.upload-title h1 span:after,.upload-title h1 span:before {
+.upload-title h1 a:after,.upload-title h1 a:before {
     content: " ";
     display: block;
     border-bottom: 1px solid #ccc;

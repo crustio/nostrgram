@@ -185,7 +185,7 @@
         function urlify( text, isMine ) {
             var ytRegex = /(http:|https:)?\/\/(www\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?/g
             var imgRegex = /\b(https?:\/\/\S+(?:\.png|\.jpe?g|\.gif|\.webp|\.PNG|\.JPE?G|\.GIF|\.WEBP)\S*)\b/g;
-            var imgRegex2 = /\b(https?:\/\/crustipfs\.info\/ipfs\/\S+)\b/g;
+            var imgRegex2 = /\b(https?:\/\/nostr\.crustapps\.net\/ipfs\/\S+)\b/g;
             var urlRegex = /\S+\.{1}[a-zA-Z0-9\?\=\&\$\+\,\;\@\#\%\-\_]{2,}\/?[a-zA-Z0-9/\\?\=\&\$\+\,\;\@\#\%\-\_\.]*/g;
             var returnable = "";
             if ( !isMine && !text.match( ytRegex ) && !text.match( imgRegex ) && !text.match( imgRegex2 ) ) {
@@ -4340,38 +4340,52 @@
     </script>
     <script>
         function uploadFile() {
-            let photo = document.getElementById("image-file")[ "files" ][ 0 ];
+            let photo = document.getElementById( "image-file" )[ "files" ][ 0 ];
+            if (photo === undefined) {
+                console.error("Please choose an image.");
+                return;
+            }
             let formData = new FormData();
-            formData.append("photo", photo);
+            formData.append( "photo", photo );
             
-            document.getElementById("progressBar").value = Math.round(0);
+            document.getElementById( "progressBar" ).value = Math.round(0);
+            let imgDiv = null;
             let xhr = new XMLHttpRequest();
             xhr.addEventListener("load", (r) => {
                 let statusCode = xhr.status;
                 if (statusCode >= 200 && statusCode < 300) {
                     let cid = JSON.parse(r.target.responseText)["Hash"];
-                    let imgUrl = "https://crustipfs.info/ipfs/" + cid;
-                    document.getElementById("imgTip").style.display = "block";
-                    showImage(imgUrl);
+                    let imgUrl = "https://nostr.crustapps.net/ipfs/" + cid;
+                    document.getElementById( "imgTip" ).style.display = "block";
+                    if (imgDiv !== null) imgDiv.setAttribute( "data-img", imgUrl );
                 } else {
-                    alert(`Upload file ${photo.name} failed, please try again.`);
+                    console.error(`Upload file ${photo.name} failed, please try again.`);
                 }
             }, false);
-            xhr.upload.addEventListener('progress', function (e) {
+            xhr.addEventListener("error", (e) => {
+                alert(`Upload file ${photo.name} failed, error:${JSON.stringify(e)}, please try again.`);
+                document.getElementById( "uploadStatus" ).innerHTML = "Upload image failed, please try again.";
+            });
+            xhr.upload.addEventListener("progress", function (e) {
                 let percent = (event.loaded / event.total) * 100;
-                let uploadContent = "Uploaded " + event.loaded + " bytes of " + event.total;
-                document.getElementById("progressBar").value = Math.round(percent);
+                let uploadContent = "uploaded " + event.loaded + " bytes of " + event.total;
+                document.getElementById( "progressBar" ).value = Math.round(percent);
                 if (percent === 100) {
-                    document.getElementById("uploadStatus").innerHTML = "100% " + uploadContent;
+                    document.getElementById( "uploadStatus" ).innerHTML = "100% " + uploadContent;
+                    imgDiv = showImage("");
                 } else {
-                    document.getElementById("uploadStatus").innerHTML = Math.round(percent) + "% " + uploadContent;
+                    document.getElementById( "uploadStatus" ).innerHTML = Math.round(percent) + "% " + uploadContent;
                 }
             });   
-            xhr.open('post', 'https://gw.crustfiles.net/api/v0/add?pin=true');
+            xhr.open("post", "https://nostr.crustapps.net/api/v0/add?pin=true");
             xhr.setRequestHeader("Authorization","Basic Y1RIYVd3em95V1diSGVtSDdHVDJnU3UxN2g0THRpb3FiYnhxaURFQmlSNDlEdnBUTjoweDU4MjNiMmFmOTA4ZTYxYTM0Y2FhNTU3ZTU3ZGRlMWMzNTJhNGUxNTk3OTM4ZmE0YzdiNjYzN2MwMTJiYzYxNDY5Y2U0MTViNGVmZTQzNzNjYWExZWRjYTdkMGI3NDE2MDViMDYwZTBjZmNjNjNmNDVkNjIyNTBjZWVhOWQ3YTgx")
             xhr.send(formData);
-            document.getElementById("uploadStatus").innerHTML = "Preparing to upload, please wait...";
-            document.getElementById("uploadDiv").style.display = "block";
+
+            document.getElementById( "uploadStatus" ).innerHTML = "Preparing to upload, please wait...";
+            document.getElementById( "uploadDiv" ).style.visibility = "visible";
+            document.getElementById( "image-file" ).disabled = true;
+            document.getElementById( "image-file-lable" ).style.opacity = 0.65;
+            document.getElementById( "image-file-lable" ).style.cursor = "not-allowed";
         }
         function showImgs() {
             if ( localStorage[ "img_cache" ] ) {
@@ -4384,11 +4398,12 @@
 
             let html = `
                 <div class="upload-title" style="height:70px">
-                <h1>IMAGE UPLOAD<span>Provided by Crust Network</span></h1>
+                <h1>IMAGE UPLOAD<a href="https://crust.network/" target="_blank">Powered by Crust Network</a></h1>
                 </div>
-                <form enctype="multipart/form-data" method="post">
-                    <input type="file" id="image-file" accept="image/*" onchange="uploadFile()" style="display:none" ><br>
+                <form enctype="multipart/form-data" method="post" style="text-align:center">
+                    <input type="file" id="image-file" accept="image/*" style="display:none" onchange="uploadFile()" ><br>
                     <label 
+                        id="image-file-lable"
                         for="image-file" 
                         style="display: inline-block;
                                 width: 140px; 
@@ -4405,12 +4420,13 @@
                     >
                         select image
                     </label>
-                    <div id="uploadDiv" style="display:none">
+                    <div id="uploadDiv" style="visibility:hidden">
                         <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
-                        <p id="uploadStatus"></p>
+                        <p id="uploadStatus">Preparing to upload, please wait...</p>
                     </div>
+                    <p id="imgTip" style="font-family:baskerville, serif; font-size:14px;display:${imgs.length === 0 ? 'none' : 'block' }">
+                        images:(click to get url)</p>
                 </form>
-                <p id="imgTip" style="font-size:11px;display:${imgs.length === 0 ? 'none' : 'block' }">images:(click to get url)</p>
                 <div class="gallery-holder" style="overflow-y:auto"></div>
             `;
             document.getElementById( "modal" ).innerHTML = html;
@@ -4446,60 +4462,35 @@
                 document.getElementsByClassName( "note-input" )[ 0 ].select();
             }
             var imgObj = new Image();
+            var tryout = 10;
             imgObj.src = img;
             imgObj.onload = function() {
-                for(const i of document.getElementsByClassName("child-center")) {
+                for(const i of document.getElementsByClassName( "child-center" )) {
                     i.style.display = "none";
                 }
-                div.style.backgroundImage = "url(" + img + ")";
+                div.style.backgroundImage = "url(" + div.getAttribute( "data-img" ) + ")";
+                document.getElementById( "uploadDiv" ).style.visibility = "hidden";
+                document.getElementById( "image-file" ).disabled = false;
+                document.getElementById( "image-file-lable" ).style.opacity = 1;
+                document.getElementById( "image-file-lable" ).style.cursor = "pointer";
             }
-            imgObj.onerror = async function() {
-                pinImageWithDiv(div);
+            imgObj.onerror = async function(e) {
+                if (--tryout >= 0) {
+                    await new Promise(r => setTimeout(r, 3000));
+                    imgObj.src = div.getAttribute( "data-img" ) + "?t=" + new Date().getTime();
+                } else {
+                    document.getElementById( "uploadDiv" ).style.visibility = "hidden";
+                    document.getElementById( "image-file" ).disabled = false;
+                    document.getElementById( "image-file-lable" ).style.opacity = 1;
+                    document.getElementById( "image-file-lable" ).style.cursor = "pointer";
+                }
             }
             if (imgObj.complete) imgObj.onload();
+
             var parentDiv = document.getElementsByClassName( "gallery-holder" )[ 0 ];
             parentDiv.insertBefore(div, parentDiv.firstChild);
-        }
-        function pinImageWithDiv(div) {
-            var img = div.getAttribute( "data-img" );
-            var cid = img.substring("https://crustipfs.info/ipfs/".length);
-            var name = cid;
-            const cancel = axios.CancelToken.source();
-            axios.request({
-                method: "post",
-                url: "https://pin.crustcode.com/psa/pins",
-                data: {
-                    cid: cid,
-                    name: name
-                },
-                headers: {
-                    Authorization: "Bearer Y1RIYVd3em95V1diSGVtSDdHVDJnU3UxN2g0THRpb3FiYnhxaURFQmlSNDlEdnBUTjoweDU4MjNiMmFmOTA4ZTYxYTM0Y2FhNTU3ZTU3ZGRlMWMzNTJhNGUxNTk3OTM4ZmE0YzdiNjYzN2MwMTJiYzYxNDY5Y2U0MTViNGVmZTQzNzNjYWExZWRjYTdkMGI3NDE2MDViMDYwZTBjZmNjNjNmNDVkNjIyNTBjZWVhOWQ3YTgx"
-                },
-                cancelToken: cancel.token
-            })
-            .catch((e) => {
-                console.log(e)
-                pinImageWithDiv(div);
-            })
-            .then((r) => {
-                console.log(r)
-                var tryout = 30;
-                var imgObj = new Image();
-                imgObj.src = img;
-                imgObj.onload = function() {
-                    for(const i of document.getElementsByClassName("child-center")) {
-                        i.style.display = "none";
-                    }
-                    div.style.backgroundImage = "url(" + img + ")";
-                }
-                imgObj.onerror = async function() {
-                    if (--tryout >= 0) {
-                        await new Promise(r => setTimeout(r, 3000));
-                        imgObj.src = img + "?t=" + new Date().getTime();
-                    }
-                }
-                if (imgObj.complete) imgObj.onload();
-            })
+
+            return div;
         }
     </script>
       
